@@ -8,13 +8,13 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export const fetchNodesDb = async () => {
-	const { data, error } = await supabase.from("nodes").select();
+	const { data } = await supabase.from("nodes").select();
 
 	return transformNodesData(data);
 };
 
 export const addNodeDb = async ({ label, x, y, type }: { label: string; x: number; y: number; type: string }) => {
-	const { data, error } = await supabase.from("nodes").insert([{ label, x, y, type }]).select();
+	const { data } = await supabase.from("nodes").insert([{ label, x, y, type }]).select();
 	return transformNodesData(data)[0];
 };
 
@@ -22,17 +22,41 @@ export const updateNodeLabelDb = ({ id, label }: { id: number; label: string }):
 	return {} as any;
 };
 
-export const deleteNodeDb = (id: number): Node => {
-	return {} as any;
+export const deleteNodeDb = async (id: number) => {
+	const { data } = await supabase.from("nodes").delete().eq("id", id).select();
+
+	return transformNodesData(data);
 };
 
 export const fetchEdgesDb = async () => {
-	const { data, error } = await supabase.from("edges").select();
+	const { data } = await supabase.from("edges").select();
 
 	return data;
 };
 
 export const addEdgeDb = async ({ source, target }: { source: string; target: string }) => {
-	const { data, error } = await supabase.from("edges").insert([{ source, target }]).select();
+	const { data } = await supabase.from("edges").insert([{ source, target }]).select();
+	return data;
+};
+
+// Subjects
+export const fetchSubjectsDb = async () => {
+	const { data } = await supabase.from("subjects").select("id, title");
+
+	return data;
+};
+
+export const removeSubjectDb = async (id: number) => {
+	const { data } = await supabase.from("subjects").delete().eq("id", id);
+
+	return data;
+};
+
+export const addSubjectDb = async (label: string) => {
+	const { data } = await supabase
+		.from("subjects")
+		.insert([{ title: label }])
+		.select();
+
 	return data;
 };

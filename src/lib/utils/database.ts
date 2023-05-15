@@ -11,3 +11,7 @@ export const transformNodesData = (data: any) => {
 		return transformed;
 	}
 };
+
+export const generateRandomSubjectTitle = () => {
+	return [...Array(10)].map(() => ((Math.random() * 36) | 0).toString(36)).join("");
+};

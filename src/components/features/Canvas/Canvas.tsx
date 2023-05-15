@@ -3,7 +3,8 @@ import ReactFlow, { Controls, Background, useNodesState, useEdgesState, addEdge 
 
 import "reactflow/dist/style.css";
 import Node from "../Node/Node";
-import { supabase, fetchNodesDb, fetchEdgesDb, addNodeDb, addEdgeDb } from "../../../lib/database/supabase";
+import { supabase, addNodeDb, addEdgeDb } from "../../../lib/database/supabase";
+import { useLocalStore, useSupabaseStore } from "../../../lib/store/store";
 
 let id = 3;
 const getId = () => `${id++}`;
@@ -15,18 +16,24 @@ function Canvas({ onNodeClick }: any) {
 	const [nodes, setNodes, onNodesChange] = useNodesState([]);
 	const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+	const storeFetchNodes = useSupabaseStore((state: any) => state.fetchNodes);
+	const storeDeleteNode = useSupabaseStore((state: any) => state.deleteNode);
+	const storeAddNode = useSupabaseStore((state: any) => state.addNode);
+	const storeFetchEdges = useSupabaseStore((state: any) => state.fetchEdges);
+	const storeAddEdge = useSupabaseStore((state: any) => state.addEdge);
+
 	/**
 	 * Supabase
 	 */
 
 	const fetchNodes = useCallback(async () => {
-		const nodes = await fetchNodesDb();
+		const nodes = await storeFetchNodes();
 		setNodes(nodes as any);
 	}, []);
 
 	const fetchEdges = useCallback(async () => {
-		const edges = await fetchEdgesDb();
-		setEdges(edges as any);
+		const edges = await storeFetchEdges();
+		setEdges(edges);
 	}, []);
 
 	useEffect(() => {
@@ -35,7 +42,8 @@ function Canvas({ onNodeClick }: any) {
 	}, [fetchNodes, fetchEdges]);
 
 	const onNodesDelete = async ([{ id }]: any) => {
-		const { data, error } = await supabase.from("nodes").delete().eq("id", id);
+		const nodes = await storeDeleteNode(id);
+		setNodes(nodes);
 	};
 
 	/**
@@ -61,10 +69,10 @@ function Canvas({ onNodeClick }: any) {
 				const { top, left } = (reactFlowWrapper.current as any).getBoundingClientRect();
 				const id = getId();
 
-				const node = await addNodeDb({ label: `Node ${id}`, x: event.clientX - left, y: event.clientY - top, type: "textUpdater" });
+				const node = await storeAddNode({ label: `Node ${id}`, x: event.clientX - left, y: event.clientY - top, type: "textUpdater" });
 				setNodes((nodes: any) => [...nodes, node]);
 
-				const edge = await addEdgeDb({ source: connectingNodeId?.current || "", target: node?.id });
+				const edge = await storeAddEdge({ source: connectingNodeId?.current || "", target: node?.id });
 				setEdges((edges: any) => [...edges, ...(edge as any)]);
 			}
 		},
